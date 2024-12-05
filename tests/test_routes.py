@@ -43,7 +43,6 @@ DATABASE_URI = os.getenv(
 )
 BASE_URL = "/products"
 
-
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
@@ -166,6 +165,55 @@ class TestProductRoutes(TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+
+    def test_get_product(self):
+        """Test get product"""
+        test_product=self._create_products(1)[0]
+        response=self.client.get(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        response_data=response.get_json()
+        self.assertEqual(response_data['name'],test_product.name)
+
+    def test_get_product_not_found(self):
+        """Test get product not found"""
+        response=self.client.get(f'{BASE_URL}/0')
+        self.assertEqual(response.status_code,status.HTTP_404_NOT_FOUND)
+        response_data=response.get_json()
+        self.assertIn('was not found',response_data['message'])
+
+    def test_update_product(self):
+        """Test update a product"""
+        test_product=self._create_products(1)[0]
+        response=self.client.get(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        update_product=response.get_json()
+
+        update_product['description']='Updated description'
+        response=self.client.put(f'{BASE_URL}/{update_product["id"]}',json=update_product)
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+        update_data=response.get_json()
+        app.logger.debug(update_data)
+        self.assertEqual(update_data['description'],'Updated description')
+
+    def
+
+    def test_delete_product(self):
+        """Test delete product"""
+        test_products=self._create_products(5)
+        total_products=self.get_product_count()
+        test_product=test_products[0]
+
+        app.logger.info(f'Product count: {total_products}')
+        response=self.client.get(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code,status.HTTP_200_OK)
+
+        response=self.client.delete(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code,status.HTTP_204_NO_CONTENT)
+
+        response=self.client.get(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code,status.HTTP_404_NOT_FOUND)
+        new_count=self.get_product_count()
+        self.assertEqual(new_count,total_products-1)
 
     ######################################################################
     # Utility functions

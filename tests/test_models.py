@@ -29,14 +29,15 @@ import unittest
 from decimal import Decimal
 
 from service import app
-from service.models import Product, Category, db
+from service.models import Product, Category, db, DataValidationError
 from tests.factories import ProductFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
 )
 
-logger = logging.getLogger()
+
+# logger = logging.getLogger()
 
 
 ######################################################################
@@ -110,7 +111,7 @@ class TestProductModel(unittest.TestCase):
     def test_read_a_product(self):
         """Test reading a product"""
         product = ProductFactory()
-        logger.debug(f'Product: {product}')
+        app.logger.debug(f'Product: {product}')
         product.id = None
         product.create()
         self.assertIsNotNone(product.id)
@@ -126,10 +127,10 @@ class TestProductModel(unittest.TestCase):
     def test_update_product(self):
         """Test updating a product"""
         product = ProductFactory()
-        logger.debug(f'Product: {product}')
+        app.logger.debug(f'Product: {product}')
         product.id = None
         product.create()
-        logger.debug(f'Product: {product}')
+        app.logger.debug(f'Product: {product}')
         product.description = 'New description'
         original_id = product.id
         product.update()
@@ -139,10 +140,21 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(all_products[0].id, original_id)
         self.assertEqual(all_products[0].description, 'New description')
 
+    def test_update_product_empty_id(self):
+        """Test updating a product - empty ID"""
+        product = ProductFactory()
+        app.logger.info(f'Product: {product}')
+        product.id = None
+        product.create()
+        app.logger.info(f'Product: {product}')
+        product.description = 'New description'
+        product.id = None
+        self.assertRaises(DataValidationError, product.update())
+
     def test_delete_product(self):
         """Test deleting a product"""
         product = ProductFactory()
-        logger.debug(f'Product: {product}')
+        app.logger.debug(f'Product: {product}')
         product.id = None
         product.create()
         self.assertIsNotNone(product.id)
