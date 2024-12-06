@@ -36,8 +36,7 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
 )
 
-
-# logger = logging.getLogger()
+logger = logging.getLogger()
 
 
 ######################################################################
@@ -143,13 +142,13 @@ class TestProductModel(unittest.TestCase):
     def test_update_product_empty_id(self):
         """Test updating a product - empty ID"""
         product = ProductFactory()
-        app.logger.info(f'Product: {product}')
+        app.logger.info(f'Product: {product.description}')
         product.id = None
         product.create()
-        app.logger.info(f'Product: {product}')
+        app.logger.info(f'Product: {product.description}')
         product.description = 'New description'
         product.id = None
-        self.assertRaises(DataValidationError, product.update())
+        self.assertRaises(DataValidationError, product.update)
 
     def test_delete_product(self):
         """Test deleting a product"""
@@ -214,3 +213,42 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(count, found_products.count())
         for p in found_products:
             self.assertEqual(p.category, category)
+
+    def test_deserialize_available_non_bool(self):
+        """Test deserialize when 'available' field is non boolean"""
+        product = ProductFactory.create()
+        product.available = 'non-bool'
+        data = product.serialize()
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_deserialize_attribute_missing(self):
+        """Test deserialize when 'available' field is missing"""
+        product = ProductFactory.create()
+        data = product.serialize()
+        del (data['available'])
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_find_by_price(self):
+        """Find product by price"""
+        product = ProductFactory.create()
+        product.create()
+        price = product.price
+        logger.info(f'Price: {price}')
+        result = Product.find_by_price(price)
+        logger.info(f'result: {result}')
+
+        count = len([p for p in result if p.price == price])
+        self.assertEqual(count, 1)
+
+    def test_find_by_price_string(self):
+        """Find product when price is a string"""
+        product = ProductFactory.create()
+        product.create()
+        product_price = product.price
+        logger.info(f'product.price: {product_price}')
+        product_price = str(f'"{product_price} "')
+        logger.info(f'Price: {product_price}')
+        result = Product.find_by_price(product_price)
+        logger.info(f'result: {result}')
+        count = len([p for p in result if p.price == product_price])
+        self.assertEqual(count, 1)

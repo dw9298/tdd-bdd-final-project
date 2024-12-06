@@ -29,8 +29,9 @@ available (boolean) - True for products that are available for adoption
 
 """
 import logging
-from enum import Enum
 from decimal import Decimal
+from enum import Enum
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
@@ -115,12 +116,12 @@ class Product(db.Model):
     def serialize(self) -> dict:
         """Serializes a Product into a dictionary"""
         return {
-            "id": self.id,
-            "name": self.name,
+            "id":          self.id,
+            "name":        self.name,
             "description": self.description,
-            "price": str(self.price),
-            "available": self.available,
-            "category": self.category.name  # convert enum to string
+            "price":       str(self.price),
+            "available":   self.available,
+            "category":    self.category.name  # convert enum to string
         }
 
     def deserialize(self, data: dict):
